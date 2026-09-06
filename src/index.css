@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --color-natural-bg: #FDFBF7;
+  --color-natural-surface: #FFFFFF;
+  --color-natural-subtle: #F4EFEA;
+  --color-natural-muted: #E8E2D9;
+  --color-natural-border: #E8E2D9;
+  --color-natural-border-strong: #D9D1C5;
+  --color-natural-forest: #4A5D44;
+  --color-natural-sage: #8B9D83;
+  --color-natural-clay: #D4A373;
+  --color-natural-charcoal: #3D3D3D;
+  --color-natural-dark-bg: #1A1E19;
+  --color-natural-dark-surface: #222821;
+  --color-natural-dark-subtle: #2B332A;
+  --color-natural-dark-border: #353E33;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: #FDFBF7;
+    color: #3D3D3D;
+    @apply antialiased transition-colors duration-200 selection:bg-[#8B9D83]/20 selection:text-[#4A5D44];
+  }
+
+  .dark body {
+    background-color: #1A1E19;
+    color: #F1EFEA;
+    @apply selection:bg-[#8B9D83]/30 selection:text-[#8B9D83];
+  }
+
+  h1, h2, h3, .font-natural-serif {
+    font-family: var(--font-serif);
+  }
+}
+
+
