@@ -11,7 +11,7 @@ import {
   DeletedTicketArchive,
   AppTab,
 } from '../types';
-import { defaultStorageAdapter } from '../storage/LocalStorageAdapter';
+import { defaultCloudStorageAdapter, CloudSyncStatus } from '../storage/CloudDatabaseAdapter';
 import { ProfileRepository } from '../repositories/ProfileRepository';
 import { TicketRepository } from '../repositories/TicketRepository';
 import { SettingsRepository } from '../repositories/SettingsRepository';
@@ -28,6 +28,15 @@ interface AppContextType {
   updateProfile: (id: string, name: string) => Promise<Profile>;
   deleteProfile: (id: string) => Promise<void>;
   switchProfile: (id: string) => Promise<void>;
+
+  // Cloud Database Synchronization
+  syncStatus: CloudSyncStatus;
+  lastSyncedAt: Date | null;
+  activeVaultId: string;
+  setActiveVaultId: (vaultId: string) => Promise<void>;
+  forceCloudSync: () => Promise<void>;
+  isCloudSyncModalOpen: boolean;
+  setIsCloudSyncModalOpen: (open: boolean) => void;
 
   // Tickets
   tickets: Ticket[];
@@ -106,10 +115,10 @@ const defaultSort: SortOption = {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Instantiate repository and service singletons
-const profileRepo = new ProfileRepository(defaultStorageAdapter);
-const ticketRepo = new TicketRepository(defaultStorageAdapter);
-const settingsRepo = new SettingsRepository(defaultStorageAdapter);
+// Instantiate repository and service singletons using cross-device CloudDatabaseAdapter
+const profileRepo = new ProfileRepository(defaultCloudStorageAdapter);
+const ticketRepo = new TicketRepository(defaultCloudStorageAdapter);
+const settingsRepo = new SettingsRepository(defaultCloudStorageAdapter);
 
 const profileService = new ProfileService(profileRepo, ticketRepo);
 const ticketService = new TicketService(ticketRepo);
@@ -125,6 +134,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sort, setSort] = useState<SortOption>(defaultSort);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [lastCelebratedAt, setLastCelebratedAt] = useState<number>(0);
+
+  // Cloud Database Persistence & Sync State
+  const [syncStatus, setSyncStatus] = useState<CloudSyncStatus>(defaultCloudStorageAdapter.getSyncStatus());
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(defaultCloudStorageAdapter.getLastSyncedAt());
+  const [activeVaultId, setActiveVaultIdState] = useState<string>(defaultCloudStorageAdapter.getActiveVaultId());
+  const [isCloudSyncModalOpen, setIsCloudSyncModalOpen] = useState<boolean>(false);
 
   const celebrateProgress = useCallback(() => {
     setLastCelebratedAt(Date.now());
@@ -228,6 +243,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [showToast]);
 
+  // Cloud Database synchronization subscriptions & background live updates
+  useEffect(() => {
+    const unsubSync = defaultCloudStorageAdapter.subscribeSyncStatus((status) => {
+      setSyncStatus(status);
+      setLastSyncedAt(defaultCloudStorageAdapter.getLastSyncedAt());
+    });
+
+    const unsubData = defaultCloudStorageAdapter.subscribeDataChange(async () => {
+      // Incoming update from another device (iPhone, iPad, or desktop)
+      try {
+        const currentProfiles = await profileService.getProfiles();
+        setProfiles(currentProfiles);
+        const activeId = await settingsService.getActiveProfileId();
+        const targetProfile = currentProfiles.find((p) => p.id === activeId) || currentProfiles[0] || null;
+        setActiveProfile(targetProfile);
+        if (targetProfile) {
+          const freshTickets = await ticketService.getTicketsForProfile(targetProfile.id);
+          const freshTrash = await ticketService.getDeletedTickets(targetProfile.id);
+          setTickets(freshTickets);
+          setTrashTickets(freshTrash);
+        }
+      } catch (e) {
+        console.warn('Live sync update error:', e);
+      }
+    });
+
+    return () => {
+      unsubSync();
+      unsubData();
+    };
+  }, []);
+
   // Load tickets whenever activeProfile changes
   const loadTicketsForProfile = useCallback(async (profileId: string) => {
     try {
@@ -240,6 +287,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast('error', 'Failed to load tickets', err.message);
     }
   }, [showToast]);
+
+  // Set active cloud vault (for pairing cross-device)
+  const setActiveVaultId = useCallback(async (newVaultId: string) => {
+    await defaultCloudStorageAdapter.setVaultId(newVaultId);
+    setActiveVaultIdState(newVaultId);
+    const loadedProfiles = await profileService.getProfiles();
+    setProfiles(loadedProfiles);
+    if (loadedProfiles.length > 0) {
+      setActiveProfile(loadedProfiles[0]);
+      await loadTicketsForProfile(loadedProfiles[0].id);
+    }
+  }, [loadTicketsForProfile]);
+
+  // Force cloud sync
+  const forceCloudSync = useCallback(async () => {
+    const success = await defaultCloudStorageAdapter.fetchFromCloud(true);
+    if (success && activeProfile) {
+      await loadTicketsForProfile(activeProfile.id);
+    }
+  }, [activeProfile, loadTicketsForProfile]);
 
   // Switch profile
   const switchProfile = useCallback(async (profileId: string) => {
@@ -607,6 +674,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateProfile,
         deleteProfile,
         switchProfile,
+        syncStatus,
+        lastSyncedAt,
+        activeVaultId,
+        setActiveVaultId,
+        forceCloudSync,
+        isCloudSyncModalOpen,
+        setIsCloudSyncModalOpen,
         tickets,
         filteredTickets,
         stats,

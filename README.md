@@ -1,8 +1,8 @@
-# Personal Jira-Style Kanban Tracker
+# Miles — Personal Work Tracker
 
-A production-ready, full-stack, responsive personal work-item tracking application inspired by Jira ticket management and Kanban boards.
+A production-ready, full-stack, responsive personal work-item tracking application inspired by Jira ticket management, Kanban boards, and positive momentum analysis.
 
-Designed from the ground up to support up to **5 independent profiles/workspaces** with complete data isolation, date tracking with automated extension calculations, blocker management, real-time derived metrics, and clean repository-pattern architecture.
+Designed from the ground up with **cross-device cloud persistence**, supporting up to **5 independent profiles/workspaces** with complete data isolation, date tracking with automated extension calculations, blocker management, real-time derived metrics, and clean repository-pattern architecture. Accessible seamlessly across **Desktop, iPhone, and Tablet**.
 
 ---
 

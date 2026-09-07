@@ -61,6 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Dialog Box / Bottom Sheet */}
       <div
+        data-protected-zone="dialog"
         className={`relative w-full ${maxWidthClasses} bg-[#FDFBF7] dark:bg-[#222821] rounded-t-[28px] sm:rounded-[28px] shadow-2xl border-t sm:border border-[#E8E2D9] dark:border-[#353E33] my-0 sm:my-8 overflow-hidden z-10 max-h-[92vh] sm:max-h-[88vh] flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200`}
         onClick={(e) => e.stopPropagation()}
       >

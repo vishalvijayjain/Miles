@@ -11,6 +11,7 @@ import { FloatingProgressWidget } from './components/progress/FloatingProgressWi
 import { TicketModal } from './components/tickets/TicketModal';
 import { TrashModal } from './components/trash/TrashModal';
 import { ToastContainer } from './components/common/Toast';
+import { CloudSyncModal } from './components/layout/CloudSyncModal';
 import { Loader2 } from 'lucide-react';
 
 const MainContent: React.FC = () => {
@@ -28,7 +29,7 @@ const MainContent: React.FC = () => {
   }
 
   return (
-    <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-8">
+    <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 md:pb-8">
       {activeTab === 'kanban' && <KanbanBoard />}
       {activeTab === 'dashboard' && <DashboardView />}
       {activeTab === 'analysis' && <ProgressAnalysisView />}
@@ -37,19 +38,31 @@ const MainContent: React.FC = () => {
   );
 };
 
+const AppShell: React.FC = () => {
+  const { isCloudSyncModalOpen, setIsCloudSyncModalOpen } = useApp();
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#FDFBF7] dark:bg-[#1A1E19] text-[#3D3D3D] dark:text-[#F1EFEA] transition-colors duration-200 font-sans">
+      <Header />
+      <FloatingProgressWidget />
+      <MainContent />
+      <MobileBottomNav />
+      <TicketModal />
+      <TrashModal />
+      <ProfileModal />
+      <CloudSyncModal
+        isOpen={isCloudSyncModalOpen}
+        onClose={() => setIsCloudSyncModalOpen(false)}
+      />
+      <ToastContainer />
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <AppProvider>
-      <div className="min-h-screen flex flex-col bg-[#FDFBF7] dark:bg-[#1A1E19] text-[#3D3D3D] dark:text-[#F1EFEA] transition-colors duration-200 font-sans">
-        <Header />
-        <FloatingProgressWidget />
-        <MainContent />
-        <MobileBottomNav />
-        <TicketModal />
-        <TrashModal />
-        <ProfileModal />
-        <ToastContainer />
-      </div>
+      <AppShell />
     </AppProvider>
   );
 }

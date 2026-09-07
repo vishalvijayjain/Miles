@@ -1,6 +1,6 @@
 {
-  "name": "MilesToGo",
-  "description": "MilesToGo personal work tracker with positive momentum analysis, interactive progress widget, parent-child ticket hierarchies, and multi-profile workspace isolation.",
+  "name": "Miles",
+  "description": "Miles personal work tracker with positive momentum analysis, interactive progress widget, parent-child ticket hierarchies, and multi-profile workspace isolation.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
